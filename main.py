@@ -17,13 +17,29 @@ from PIL import Image
 # 表格和精细化内容解析
 import pdfplumber
 
+# Hugging Face
+from sentence_transformers import SentenceTransformer #生成向量嵌入
 class RAGPowerEdu:
     def __init__(self, pdf_path):
         self.pdf_path = pdf_path
         self.text_data = []
-        self.vector_store = None
-        self.model = None
-        self.tokenizer = None
+        self.table_data = []
+        self.formula_texts = []
+        self.embedding_model = None  # 嵌入生成模型
+        self.embeddings = []
+    def initialize_embedding_model(self, model_name="sentence-transformers/all-MiniLM-L6-v2"):
+        """加载嵌入生成模型, 默认使用轻量化的 all-MiniLM-L6-v2。
+        """
+        self.embedding_model = SentenceTransformer(model_name)
+        print(f"嵌入模型 {model_name} 加载完成。")
+    def vectorize_text_data(self):
+        """将文本数据转化为嵌入向量"""
+        if not self.text_data:
+            print("没有文本数据可供向量化。")
+            return
+        embeddings = self.embedding_model.encode(self.text_data, convert_to_tensor=True)
+        self.embeddings.extend(embeddings)
+        print(f"已为 {len(self.text_data)} 段文本生成嵌入向量。")
     def parse_pdf_text(self):
         """使用 PyMuPDF 提取 PDF 中的纯文本内容"""
         doc = fitz.open(self.pdf_path)
@@ -96,9 +112,9 @@ if __name__ == "__main__":
     # 初始化流程
     pdf_path = "power_textbook.pdf"
     rag_system = RAGPowerEdu(pdf_path)
-    rag_system.parse_pdf()
-    rag_system.build_knowledge_base()
-
+    rag_system.initialize_embedding_model()
+    rag_system.parse_pdf_text()  # 假设文本解析已完成
+    rag_system.vectorize_text_data()
     # 测试查询
     query = "什么是电力负荷特性？"
     result = rag_system.generate_response(query)
