@@ -10,6 +10,13 @@ from sklearn.metrics.pairwise import cosine_similarity
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 
+# 公式解析
+import pytesseract
+from PIL import Image
+
+# 表格和精细化内容解析
+import pdfplumber
+
 class RAGPowerEdu:
     def __init__(self, pdf_path):
         self.pdf_path = pdf_path
@@ -28,6 +35,34 @@ class RAGPowerEdu:
                 text_data.append(text.strip())
         self.text_data = text_data
         print(f"共解析 {len(text_data)} 页纯文本。")
+    def parse_pdf_formulas(self):
+        """提取公式区域的图片并使用 OCR 转换为文本"""
+        doc = fitz.open(self.pdf_path)
+        formula_images = []
+        formula_texts = []
+        for page_num in range(len(doc)):
+            page = doc.load_page(page_num)
+            pix = page.get_pixmap()  # 将页面渲染为图像
+            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            # 设定区域为可能的公式区域
+            ocr_result = pytesseract.image_to_string(img)
+            formula_images.append((page_num + 1, img))
+            formula_texts.append((page_num + 1, ocr_result))
+        self.formula_images = formula_images
+        self.formula_texts = formula_texts
+        print(f"共解析 {len(formula_texts)} 页公式文本。")
+
+    def parse_pdf_tables(self):
+        """使用 pdfplumber 提取 PDF 中的表格内容"""
+        with pdfplumber.open(self.pdf_path) as pdf:
+            table_data = []
+            for page_num, page in enumerate(pdf.pages):
+                tables = page.extract_tables()
+                for table in tables:
+                    df = pd.DataFrame(table)  # 转换为 DataFrame
+                    table_data.append((page_num + 1, df))
+            self.table_data = table_data
+        print(f"共解析 {len(table_data)} 个表格。")
 
     def parse_pdf(self):
         """解析PDF中的文本、表格和公式"""
@@ -53,7 +88,7 @@ if __name__ == "__main__":
     # 初始化流程
     pdf_path = "power_textbook.pdf"
     rag_system = RAGPowerEdu(pdf_path)
-    rag_system.parse_pdf_text()
+    rag_system.parse_pdf_formulas()
     rag_system.build_knowledge_base()
 
     # 测试查询
