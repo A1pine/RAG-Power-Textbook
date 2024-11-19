@@ -65,8 +65,16 @@ class RAGPowerEdu:
         print(f"共解析 {len(table_data)} 个表格。")
 
     def parse_pdf(self):
-        """解析PDF中的文本、表格和公式"""
-        pass
+        """统一调用解析方法"""
+        print("开始解析 PDF 文本...")
+        self.parse_pdf_text()
+        print("解析文本完成。")
+        print("开始解析 PDF 表格...")
+        self.parse_pdf_tables()
+        print("解析表格完成。")
+        print("开始解析 PDF 公式...")
+        self.parse_pdf_formulas()
+        print("解析公式完成。")
 
     def build_knowledge_base(self):
         """构建向量知识库"""
@@ -88,7 +96,7 @@ if __name__ == "__main__":
     # 初始化流程
     pdf_path = "power_textbook.pdf"
     rag_system = RAGPowerEdu(pdf_path)
-    rag_system.parse_pdf_formulas()
+    rag_system.parse_pdf()
     rag_system.build_knowledge_base()
 
     # 测试查询
