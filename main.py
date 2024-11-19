@@ -32,14 +32,6 @@ class RAGPowerEdu:
         """
         self.embedding_model = SentenceTransformer(model_name)
         print(f"嵌入模型 {model_name} 加载完成。")
-    def vectorize_text_data(self):
-        """将文本数据转化为嵌入向量"""
-        if not self.text_data:
-            print("没有文本数据可供向量化。")
-            return
-        embeddings = self.embedding_model.encode(self.text_data, convert_to_tensor=True)
-        self.embeddings.extend(embeddings)
-        print(f"已为 {len(self.text_data)} 段文本生成嵌入向量。")
     def parse_pdf_text(self):
         """使用 PyMuPDF 提取 PDF 中的纯文本内容"""
         doc = fitz.open(self.pdf_path)
@@ -51,6 +43,14 @@ class RAGPowerEdu:
                 text_data.append(text.strip())
         self.text_data = text_data
         print(f"共解析 {len(text_data)} 页纯文本。")
+    def vectorize_text_data(self):
+        """将文本数据转化为嵌入向量"""
+        if not self.text_data:
+            print("没有文本数据可供向量化。")
+            return
+        embeddings = self.embedding_model.encode(self.text_data, convert_to_tensor=True)
+        self.embeddings.extend(embeddings)
+        print(f"已为 {len(self.text_data)} 段文本生成嵌入向量。")
     def parse_pdf_formulas(self):
         """提取公式区域的图片并使用 OCR 转换为文本"""
         doc = fitz.open(self.pdf_path)
