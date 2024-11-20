@@ -131,8 +131,10 @@ class RAGPowerEdu:
         print(f"向量数据库已保存至 {save_path}。")
 
     def build_knowledge_base(self):
-        """构建向量知识库"""
-        pass
+        """整合构建知识库的流程"""
+        self.vectorize_text_data()
+        self.vectorize_table_data()
+        self.build_vector_store()
 
     def generate_response(self, query):
         """基于RAG生成答案"""
@@ -151,10 +153,9 @@ if __name__ == "__main__":
     pdf_path = "power_textbook.pdf"
     rag_system = RAGPowerEdu(pdf_path)
     rag_system.initialize_embedding_model()
-    rag_system.parse_pdf_text()
-    rag_system.vectorize_text_data()
-    rag_system.build_vector_store()
-    rag_system.save_vector_store("vector_store.index")
+    rag_system.parse_pdf()
+    rag_system.build_knowledge_base()
+    rag_system.save_vector_store("knowledge_base.index")
 
     # 测试查询
     query = "什么是电力负荷特性？"
