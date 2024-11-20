@@ -1,5 +1,4 @@
 # 项目主文件 rag_power_edu.py
-
 import fitz  # PDF解析
 import pdfplumber  # 高精度解析表格
 import pandas as pd
@@ -80,6 +79,21 @@ class RAGPowerEdu:
             self.table_data = table_data
         print(f"共解析 {len(table_data)} 个表格。")
 
+    def vectorize_table_data(self):
+        """将表格数据转化为嵌入向量"""
+        if not self.table_data:
+            print("没有表格数据可供向量化。")
+            return
+        table_texts = []
+        for page_num, table in self.table_data:
+            # 将 DataFrame 的每行拼接成一句话
+            # 确保向量化时能保留上下文信息
+            table_text = table.apply(lambda row: " | ".join(row.astype(str)), axis=1).str.cat(sep="\n")
+            table_texts.append(table_text)
+        embeddings = self.embedding_model.encode(table_texts, convert_to_tensor=True)
+        self.embeddings.extend(embeddings)
+        print(f"已为 {len(self.table_data)} 个表格生成嵌入向量。")
+
     def parse_pdf(self):
         """统一调用解析方法"""
         print("开始解析 PDF 文本...")
@@ -91,6 +105,30 @@ class RAGPowerEdu:
         print("开始解析 PDF 公式...")
         self.parse_pdf_formulas()
         print("解析公式完成。")
+
+    def build_vector_store(self):
+        """构建向量数据库"""
+        if not self.embeddings:
+            print("没有嵌入向量可供构建向量数据库。")
+            return
+        # 转化为 FAISS 支持的矩阵格式
+        dimension = self.embeddings[0].shape[-1]
+        index = faiss.IndexFlatL2(dimension)
+        faiss_index = faiss.IndexIDMap(index)
+        # 向量和索引 ID
+        vectors = np.vstack([embedding.cpu().numpy() for embedding in self.embeddings])
+        ids = np.arange(len(vectors))
+        faiss_index.add_with_ids(vectors, ids)
+        self.vector_store = faiss_index
+        print("向量数据库构建完成。")
+
+    def save_vector_store(self, save_path):
+        """保存向量数据库到文件"""
+        if not self.vector_store:
+            print("没有向量数据库可以保存。")
+            return
+        faiss.write_index(self.vector_store, save_path)
+        print(f"向量数据库已保存至 {save_path}。")
 
     def build_knowledge_base(self):
         """构建向量知识库"""
@@ -113,8 +151,11 @@ if __name__ == "__main__":
     pdf_path = "power_textbook.pdf"
     rag_system = RAGPowerEdu(pdf_path)
     rag_system.initialize_embedding_model()
-    rag_system.parse_pdf_text()  # 假设文本解析已完成
+    rag_system.parse_pdf_text()
     rag_system.vectorize_text_data()
+    rag_system.build_vector_store()
+    rag_system.save_vector_store("vector_store.index")
+
     # 测试查询
     query = "什么是电力负荷特性？"
     result = rag_system.generate_response(query)
