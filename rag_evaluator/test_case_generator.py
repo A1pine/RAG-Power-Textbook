@@ -1,12 +1,12 @@
-from openai import OpenAI
+from langchain_groq import ChatGroq
 import json
 import re
 
 class TestCaseGenerator:
-    def __init__(self, api_key, api_base):
-        self.client = OpenAI(
-            api_key= api_key,  
-            base_url = api_base
+    def __init__(self, groq_api_key):
+        # 初始化 ChatGroq 客户端
+        self.client = ChatGroq(
+            api_key=groq_api_key,
         )
 
     # 提取 JSON 部分
@@ -38,31 +38,33 @@ class TestCaseGenerator:
             return None
 
     def generate_test_cases(self, context, num_cases=5):
-        """使用 GPT 生成测试集"""
+        """使用 ChatGroq 生成测试集"""
         prompt = f"""
         给定以下内容：
         {context}
 
         请生成 {num_cases} 个关于内容的用户查询，以及理想答案（以 JSON 格式输出）。
         格式例如:
-        {{["query": "什么是变压器的主要应用场景",
-          "answer":"电力传输, 家庭电器, 工业设备等"],
-          ["query": "什么是变压器的组成",
-           "answer": "初级绕组, 次级绕组, 铁芯"]
-          }}
+        [
+          {{"query": "什么是变压器的主要应用场景",
+            "answer": "电力传输, 家庭电器, 工业设备等"}},
+          {{"query": "什么是变压器的组成",
+            "answer": "初级绕组, 次级绕组, 铁芯"}}
+        ]
         """
 
-        response = self.client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "system", "content": "你是智能辅导助手。"},
-                      {"role": "user", "content": prompt}],
-            temperature=0.7
-        )
+        messages = [
+            {"role": "system", "content": "你是智能辅导助手。"},
+            {"role": "user", "content": prompt}
+        ]
 
-        content = response.choices[0].message.content
+        response = self.client.invoke(messages)
+        content = response.content
+
+        # 提取 JSON 测试集
         test_cases = self.extract_json_from_response(content)
         if test_cases:
-            return [test_cases]
+            return test_cases
         else:
             raise ValueError(f"生成测试集失败，响应内容: {content}")
 
@@ -71,5 +73,8 @@ if __name__ == "__main__":
     变压器是一种静止的电气装置，用于改变交流电的电压。
     它通常由初级绕组、次级绕组和铁芯组成。
     """
-    testcase_generator = TestCaseGenerator("", "") # 替换为实际的API密钥和 API BASE
-    testcase_generator.generate_test_cases(sample_context, 1)
+    # 替换为你的 Groq API Key
+    groq_api_key = ""
+    testcase_generator = TestCaseGenerator(groq_api_key)
+    test_cases = testcase_generator.generate_test_cases(sample_context, num_cases=2)
+    print(test_cases)
