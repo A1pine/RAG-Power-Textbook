@@ -22,8 +22,8 @@ class RAGEvaluator:
         RAG 系统的回答是：{retrieved}
         参考答案是：{reference}
         
-        请评分（0-10），并解释理由。
-        格式：{{"score": 分数, "reason": "解释"}}
+        请评分（0-10），并解释理由， 用英语回复
+        格式：{{"score": score, "reason": "explanation"}}
         """
         messages = [
             {"role": "system", "content": "你是一个评估助手。"},
@@ -101,8 +101,7 @@ if __name__ == "__main__":
     
     rag_system = MockRAGSystem()
 
-    evaluator = RAGEvaluator(groq_api_key=""
-")
+    evaluator = RAGEvaluator(groq_api_key="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")
     ragas_metrics = evaluator.evaluate_rag_with_ragas(test_cases, rag_system)
     gpt_scores = [
         evaluator.judge_with_gpt(
