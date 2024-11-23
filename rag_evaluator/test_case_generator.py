@@ -43,7 +43,7 @@ class TestCaseGenerator:
         给定以下内容：
         {context}
 
-        请生成 {num_cases} 个关于内容的用户查询，以及理想答案（以 JSON 格式输出）。
+        请生成 {num_cases} 个关于内容的用户查询，以及理想答案（以 JSON 格式输出）， 用英语回复。
         格式例如:
         [
           {{"query": "什么是变压器的主要应用场景",
@@ -60,9 +60,10 @@ class TestCaseGenerator:
 
         response = self.client.invoke(messages)
         content = response.content
+        # print(content)
 
         # 提取 JSON 测试集
-        test_cases = self.extract_json_from_response(content)
+        test_cases = json.loads(content)
         if test_cases:
             return test_cases
         else:
