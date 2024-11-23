@@ -74,9 +74,3 @@ if __name__ == "__main__":
     query_embedding = model.encode([query_sentence])[0]
     indices = store.search_vector_store(query_embedding)
     print(f"最相似的向量索引: {indices}")
-    # embeddings = [np.random.rand(384).astype(np.float32) for _ in range(2)]
-    # vector_store = VectorStore()
-    # vector_store.build_vector_store(embeddings)
-    # query_vec = np.random.rand(384).astype(np.float32).reshape(1, -1)
-    # result = vector_store.search_vector_store(query_vec)
-    # print(f"Search result: {result}")
