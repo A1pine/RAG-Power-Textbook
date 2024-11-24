@@ -1,29 +1,50 @@
 from sentence_transformers import SentenceTransformer
 import faiss
+from langchain_community.docstore.in_memory import InMemoryDocstore
+from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings.fastembed import FastEmbedEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 import numpy as np
+from uuid import uuid4
+import torch
 import os
 
 class VectorStore:
     def __init__(self):
         self.vector_store = None
         self.text_data = []  # 用于存储与向量相关的文档或文本信息
+        self.embedding_model=FastEmbedEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-    def build_vector_store(self, embeddings):
+    def build_vector_store(self, documents):
         """构建向量存储"""
-        if embeddings is None or len(embeddings) == 0:
+        if documents is None or len(documents) == 0:
             print("没有嵌入向量可供构建向量数据库。")
             return
 
         # 将张量转移到 CPU 并转换为 numpy 数组
-        embeddings = [embedding.cpu().numpy() for embedding in embeddings]
+        # 确保所有张量都在 CPU 上
+        # documents = torch.tensor(documents)
+        documents = [str(doc) for doc in documents]
+        # documents = np.asarray(documents) 
 
-        dimension = embeddings[0].shape[-1]
-        index = faiss.IndexFlatL2(dimension)
-        self.vector_store = faiss.IndexIDMap(index)
-        vectors = np.vstack(embeddings)
-        ids = np.arange(len(vectors))
-        self.vector_store.add_with_ids(vectors, ids)
-        print(f"Number of vectors: {len(vectors)}, Number of IDs: {len(ids)}")
+
+        # 将文档数据拆分为 chunk 的大小
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+        documents = text_splitter.create_documents(documents)
+        all_splits = text_splitter.split_documents(documents)
+
+        # dimension = documents[0].shape[-1]
+        index = faiss.IndexFlatL2(len(documents))
+        self.vector_store =  FAISS.from_documents(
+            documents=all_splits,
+            embedding=self.embedding_model,
+            normalize_L2=True,
+        )
+                
+
+        uuids = [str(uuid4()) for _ in range(len(documents))]
+
+        self.vector_store.add_documents(documents=documents, ids=uuids)
         print("向量数据库构建完成。")
 
 
@@ -32,7 +53,7 @@ class VectorStore:
         if not self.vector_store:
             print("没有向量数据库可以保存。")
             return
-        faiss.write_index(self.vector_store, save_path)
+        self.vector_store.save_local(save_path)
         print(f"向量数据库已保存至 {save_path}。")
 
     def load_vector_store(self, load_path):
@@ -40,7 +61,7 @@ class VectorStore:
         if not os.path.exists(load_path):
             print(f"向量数据库文件 {load_path} 不存在。")
             return
-        self.vector_store = faiss.read_index(load_path)
+        self.vector_store = FAISS.load_local(load_path, self.embedding_model, allow_dangerous_deserialization=True)
         print(f"向量数据库已从 {load_path} 加载。")
         return self.vector_store
     

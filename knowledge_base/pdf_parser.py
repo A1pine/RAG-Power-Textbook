@@ -7,6 +7,7 @@ import pandas as pd
 class PDFParser:
     def __init__(self, pdf_path):
         self.pdf_path = pdf_path
+        self.documents = []
         self.text_data = []
         self.table_data = []
         self.formula_texts = []
@@ -21,6 +22,7 @@ class PDFParser:
             if text.strip():  # 跳过空白页面
                 text_data.append(text.strip())
         self.text_data = text_data
+        self.documents.extend(self.text_data)
         print(f"共解析 {len(text_data)} 页纯文本。")
 
     def parse_tables(self):
@@ -33,6 +35,7 @@ class PDFParser:
                     df = pd.DataFrame(table)  # 转换为 DataFrame
                     table_data.append((page_num + 1, df))
             self.table_data = table_data
+        self.documents.extend(self.table_data)
         print(f"共解析 {len(table_data)} 个表格。")
 
     def parse_formulas(self):
@@ -46,4 +49,5 @@ class PDFParser:
             ocr_result = pytesseract.image_to_string(img)
             formula_texts.append((page_num + 1, ocr_result))
         self.formula_texts = formula_texts
+        self.documents.extend(self.formula_texts)
         print(f"共解析 {len(formula_texts)} 页公式文本。")
