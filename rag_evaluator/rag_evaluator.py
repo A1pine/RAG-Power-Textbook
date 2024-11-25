@@ -1,6 +1,12 @@
 from langchain_groq import ChatGroq
 from ragas import evaluate
-from ragas.metrics import context_precision, faithfulness, answer_relevancy, context_recall
+# from ragas.langchain.evalchain import RagasEvaluatorChain
+from ragas.metrics import (
+    faithfulness,
+    answer_relevancy,
+    context_precision,
+    context_recall,
+    )
 from datasets import Dataset
 import os
 import json
@@ -29,6 +35,7 @@ class RAGEvaluator:
             {"role": "system", "content": "你是一个评估助手。"},
             {"role": "user", "content": prompt}
         ]
+        print(query, retrieved, reference)
         
         response = self.client.invoke(messages)
         # try:
@@ -50,7 +57,7 @@ class RAGEvaluator:
             results.append({
                 "query": query,                  # 用户输入
                 "retrieved": retrieved,          # 检索到的内容
-                "reference": ideal_answer,       # 理想答案
+                "ground_truth": ideal_answer,       # 理想答案
                 "user_input": query,             # 对应于 context_precision 所需的字段
                 "retrieved_contexts": [retrieved],  # 对应于 context_precision 所需的字段
                 "response": retrieved            # 对应于 faithfulness 所需的字段
@@ -64,12 +71,6 @@ class RAGEvaluator:
             eval_dataset,
             llm=self.client,
             embeddings=self.embeddings,
-            metrics=[
-                context_precision,
-                faithfulness,
-                answer_relevancy,
-                context_recall,
-            ],
             raise_exceptions=False
         )
         return ragas_metrics
