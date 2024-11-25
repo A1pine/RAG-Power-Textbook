@@ -8,6 +8,9 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 from langchain_community.embeddings import DashScopeEmbeddings
 from langchain_core.prompts import ChatPromptTemplate
+# Rerank
+from langchain.retrievers import ContextualCompressionRetriever
+from langchain.retrievers.document_compressors import FlashrankRerank
 from langchain_groq import ChatGroq
 
 import os
@@ -46,12 +49,17 @@ class RAGSystem:
         
           Question: {question}
           """
+        
         prompt = ChatPromptTemplate.from_template(template)
  
         llm =  ChatGroq(api_key = api_key)
+        compressor = FlashrankRerank()
+        compression_retriever = ContextualCompressionRetriever(
+        base_compressor=compressor, base_retriever=retriever, model=llm
+        )
  
         chain = (
-                RunnableParallel({"context": retriever, "question": RunnablePassthrough()})
+                RunnableParallel({"context": compression_retriever, "question": RunnablePassthrough()})
                 | prompt
                 | llm
                 | StrOutputParser()
@@ -93,6 +101,7 @@ if __name__ == "__main__":
     # if not retriever: 
     vector_store = rag_system.vector_store.load_vector_store(index_path)
     retriever = vector_store.as_retriever()
+    
     
     ragas_metrics = evaluator.evaluate_rag_with_ragas(test_cases, rag_system)
 
