@@ -34,7 +34,7 @@ class RAGSystem:
         print("正在构建知识库...")
         self.parser.parse_text()
         self.parser.parse_tables()
-        # self.parser.parse_formulas()
+        self.parser.parse_formulas()
             
         self.documents = self.parser.documents
             
