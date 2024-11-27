@@ -169,17 +169,22 @@ The non-availability of materials with widely varying permittivities makes capac
 Query 5: What happens if the cable dielectric material ruptures at normal working voltage?
 If the cable dielectric material ruptures at normal working voltage, it can lead to a complete failure of the insulation system, which can result in serious consequences, such as fire or electrical shock. This highlights the importance of proper grading and the selection of suitable materials for effective insulation.
 Would you like me to include the evaluation scores and reasons as well? I could add those under each Q&A pair if you'd find that helpful.
-以下是未做任何优化时 RAGAS 系统返回的评分
-#### RAGA Metrics
 
-| Metric                | Value 1    | Value 2    | Value 3      | Value 4       | Value 5      |
-|-----------------------|------------|------------|--------------|---------------|--------------|
-| **Context Precision** | NaN        | NaN        | NaN          | NaN           | NaN          |
-| **Faithfulness**      | NaN        | NaN        | NaN          | NaN           | NaN          |
-| **Answer Relevancy**  | 0.1844     | 0.1054     | -0.1076      | -0.0882       | 0.1218       |
-| **Context Recall**    | NaN        | 0.0        | 0.0          | 1.0           | 0.0          |
+以下表格中展示了对比结果：
+Before 为未引入任何优化的成绩，After 为引入了 chunking 和 re-rank 机制后的成绩
 
-#### GROQ Scores
+| **Metric**                    | Before  |         |             |             | After   |         |         |         |         |         |
+|-------------------------------|---------|---------|-------------|-------------|---------|---------|---------|---------|---------|---------|
+|                           | Query 1 | Query 2 | Query 3     | Query 4     | Query 5 | Query 1 | Query 2 | Query 3 | Query 4 | Query 5 |
+| **Context Precision** | NaN     | NaN     | NaN         | NaN         | NaN     | 0       | 0       | 0       | NaN     | NaN     |
+| **Faithfulness**      | NaN     | NaN     | NaN         | NaN         | NaN     | 1       | NaN     | 1       | 1       | 1       |
+| **Answer Relevancy**  | 0\.1844 | 0\.1054 | \\\-0\.1076 | \\\-0\.0882 | 0\.1218 | 0\.1169 | 0\.0632 | 0\.0809 | 0\.1283 | 0\.1074 |
+| **Context Recall**    | NaN     | 0       | 0           | 1           | 0       | 1       | 0       | 0       | 0\.6667 | 0       |
+
+
+以下展示了LLM是对未做任何优化时答案的评价
+
+#### GROQ Scores(Before)
 Query 1: {"score": 9, "reason": "The response provides a clear and accurate explanation of the practical relevance of capacitance grading in electrical power systems. The answer highlights the theoretical interest in capacitance grading, but also explains the challenges in obtaining materials with widely varying permittivities. Furthermore, it points out the potential issues caused by changes in the permittivities of the materials over time, which could lead to cable dielectric rupture. The response is well-structured, concise, and informative. However, it could have been improved by providing specific examples or applications of capacitance grading in practical scenarios, which would have helped to further illustrate its relevance."}
 
 Query 2: {"score": 9, "reason": "The response gives a clear and accurate reason for why capacitance grading is challenging. However, it could be improved by providing a more detailed explanation or example of the difficulties in obtaining materials with widely varying permittivities."}
@@ -192,14 +197,7 @@ Query 5: {"score": 9, "reason": "The response is accurate, detailed, and provide
 
 在引入了 chunking 和 re-rank 机制后
 
-#### RAGAs Metrics
-
-| Metric               | Value 1    | Value 2    | Value 3      | Value 4       | Value 5      |
-|-----------------------|------------|------------|--------------|---------------|--------------|
-| **Answer Relevancy**  | 0.1169     | 0.0632     | 0.0809       | 0.1283        | 0.1074       |
-| **Context Precision** | 0.0        | 0.0        | 0.0          | NaN           | NaN          |
-| **Faithfulness**      | 1.0        | NaN        | 1.0          | 1.0           | 1.0          |
-| **Context Recall**    | 1.0        | 0.0        | 0.0          | 0.6667        | 0.0          |
+以下展示了LLM是对引入 chunking 和 rerank 优化时答案的评价
 
 #### GROQ Scores
 
